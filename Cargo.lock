@@ -650,9 +650,9 @@ dependencies = [
 
 [[package]]
 name = "rustupolis_server"
-version = "0.0.8"
+version = "0.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "490d22cccdee54396c9a816f870368ab2f2b5ca4420e4cc63fce67f5be53f703"
+checksum = "029005c5ece5a55f98b4d271eadb9e5098db2f665dc058a7c8942730102692f7"
 dependencies = [
  "aes-gcm",
  "crossbeam",
