@@ -39,7 +39,8 @@ pub fn traffic_light(traffic_id: i32) {
 
         scope.spawn(move |_| {
             let ip_address = String::from("127.0.0.1");
-            let mut client = Client::new();
+            let mut first_layer_client = Client::new();
+            let mut traffic_light = Client::new();
             let attribute = String::from("admin");
             let tuple_space_name = String::from("intersection_manager");
             let first_layer = String::from("first_layer");
@@ -53,7 +54,7 @@ pub fn traffic_light(traffic_id: i32) {
                 }
             }
 
-            client.connect(
+            first_layer_client.connect(
                 ip_address,
                 port_first_layer,
                 String::from("tcp"),
@@ -61,67 +62,74 @@ pub fn traffic_light(traffic_id: i32) {
                 key,
             );
 
-            client.attach(&first_layer, vec![attribute.clone()], &tuple_space_name);
+            first_layer_client.attach(&first_layer, vec![attribute.clone()], &tuple_space_name);
+
+            traffic_light.connect(
+                ip_address.clone(),
+                port_tcp.clone(),
+                String::from("tcp"),
+                &String::from("Traffic_light"),
+                key,
+            );
+
+            traffic_light.attach(
+                &String::from("Traffic_light"),
+                vec![String::from("admin")],
+                &(String::from("Traffic_light_") + &*traffic_id.to_string()),
+            );
 
             loop {
+                let state_tuple = traffic_light.read(vec![tuple![E::str("state"), E::Any]]);
+                let car_coming = traffic_light.read(vec![tuple![E::str("nbr_cars_coming"), E::Any]]);
+
+                let mut nb_car_coming = 0;
+
+                if car_coming.is_empty() {
+                    nb_car_coming = match car_coming.rest().first() {
+                        E::I(id) => id.clone(),
+                        _ => panic!("Not a valid id"),
+                    };
+                }
+
+                if !state_tuple.is_empty() {
+                    state = match state_tuple.rest().first() {
+                        E::S(data) => {
+                            if data.contains("green") {
+                                0
+                            } else {
+                                1
+                            }
+                        }
+                        _ => {
+                            panic!("Error");
+                        }
+                    };
+                    sender.send(state).unwrap();
+                }
+
                 let random_number = rand::thread_rng().gen_range(5..15);
 
-                client.out(vec![tuple![
+                first_layer_client.out(vec![tuple![
+                    E::I(traffic_id),
                     E::str("nbr_cars_passing"),
                     E::I(random_number)
                 ]]);
 
                 let response = receiver.recv().unwrap();
-                dbg!(response);
 
                 if response == 1 {
-                    let random_number = rand::thread_rng().gen_range(4..8);
+                    let random_number = rand::thread_rng().gen_range(6..9) + nb_car_coming;
 
-                    client.out(vec![tuple![
+                    first_layer_client.out(vec![tuple![
+                        E::I(traffic_id),
                         E::str("nbr_cars_waiting"),
                         E::I(random_number)
                     ]])
                 }
+
                 thread::sleep(Duration::new(15, 0));
             }
         });
-
-        client.connect(
-            ip_address.clone(),
-            port_tcp.clone(),
-            String::from("tcp"),
-            &String::from("Traffic_light"),
-            key,
-        );
-
-        client.attach(
-            &String::from("Traffic_light"),
-            vec![String::from("admin")],
-            &(String::from("Traffic_light_") + &*traffic_id.to_string()),
-        );
-
-        loop {
-
-            let state_tuple = client.read(vec![tuple![E::str("state"), E::Any]]);
-
-            if !state_tuple.is_empty() {
-                state = match state_tuple.rest().first() {
-                    E::S(data) => {
-                        if data == "green" {
-                            0
-                        } else {
-                            1
-                        }
-                    }
-                    _ => {
-                        panic!("Error");
-                    }
-                };
-                sender.send(state).unwrap();
-            }
-
-            thread::sleep(Duration::new(15, 0))
-        }
     })
     .unwrap();
 }
