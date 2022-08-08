@@ -9,15 +9,7 @@ mod traffic_light;
 fn main() {
     let args: Vec<String> = env::args().collect();
     let traffic_id = &args[1];
-
-    crossbeam::scope(|scope| {
-        scope.spawn(move |_| {
-            first_layer::first_layer(13);
-        });
-
-        scope.spawn(move |_| {
-            traffic_light::traffic_light(traffic_id.parse::<i32>().unwrap());
-        });
-    })
-    .unwrap();
+    //traffic_light::traffic_light(traffic_id.parse::<i32>().unwrap());
+    first_layer::first_layer(traffic_id.parse::<i32>().unwrap());
+    //second_layer::second_layer(traffic_id.parse::<i32>().unwrap());
 }

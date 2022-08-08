@@ -1,3 +1,5 @@
+use std::thread;
+use std::time::Duration;
 use rustupolis_server::client::Client;
 use rustupolis_server::repository::Repository;
 use rustupolis_server::server::{Protocol, Server};
@@ -13,7 +15,7 @@ pub fn second_layer(id: i32) {
     let mut client = Client::new();
     let road_linked: [i32; 13] = [0, 0, 0, 6, 9, 0, 3, 0, 11, 4, 0, 8, 0];
 
-    repository.add_tuple_space(String::from("district_manager") + &*id.to_string(), vec![String::from("admin")]);
+    repository.add_tuple_space(String::from("district_manager"), vec![String::from("admin")]);
     let server_tcp = Server::new(Protocol::TCP, &ip_address, &port_tcp, &repository,key);
 
     let server_launcher = ServerLauncher::new(vec![server_tcp]);
@@ -43,11 +45,11 @@ pub fn second_layer(id: i32) {
 
             if !data_car_passing.is_empty() {
                 let id_car_passing = match data_car_passing.first() {
-                    E::I(id) => id,
+                    E::I(id) => id.clone(),
                     _ => panic!("Not a valid id"),
                 };
 
-                if road_linked.contains(id_car_passing) {
+                if road_linked.contains(&id_car_passing) {
                     let nb_car_passing = match data_car_passing.rest().rest().first() {
                         E::I(id) => id.clone(),
                         _ => panic!("Not a valid id"),
@@ -59,6 +61,7 @@ pub fn second_layer(id: i32) {
                     ] )
                 }
             }
+            thread::sleep(Duration::new(5, 0))
         }
 
     }).unwrap();

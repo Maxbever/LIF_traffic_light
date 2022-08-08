@@ -11,10 +11,12 @@ use std::sync::mpsc::channel;
 
 pub fn traffic_light(traffic_id: i32) {
     let ip_address = String::from("127.0.0.1");
-    let port_tcp = String::from("900") + &*traffic_id.to_string();
+    let mut port_tcp = String::from("900") + &*traffic_id.to_string();
+    if traffic_id >= 10 {
+        port_tcp = String::from("90") + &*traffic_id.to_string();
+    }
     let repository = Repository::new("admin");
     let key = "an_example_very_";
-    let mut client = Client::new();
     let mut state = 0;
 
     repository.add_tuple_space(
@@ -44,18 +46,25 @@ pub fn traffic_light(traffic_id: i32) {
             let attribute = String::from("admin");
             let tuple_space_name = String::from("intersection_manager");
             let first_layer = String::from("first_layer");
+            let mut port_tcp = String::from("900") + &*traffic_id.to_string();
+            if traffic_id >= 10 {
+                port_tcp = String::from("90") + &*traffic_id.to_string();
+            }
             let key = "an_example_very_";
+
             let mut port_first_layer = String::from("9015");
-            if traffic_id < 4 {
+            if traffic_id <= 4 {
                 port_first_layer = String::from("9013");
             } else {
-                if traffic_id < 8 {
+                if traffic_id <= 8 {
                     port_first_layer = String::from("9014");
                 }
             }
 
+            thread::sleep(Duration::new(15, 0));
+
             first_layer_client.connect(
-                ip_address,
+                ip_address.clone(),
                 port_first_layer,
                 String::from("tcp"),
                 &first_layer,
@@ -84,7 +93,7 @@ pub fn traffic_light(traffic_id: i32) {
 
                 let mut nb_car_coming = 0;
 
-                if car_coming.is_empty() {
+                if !car_coming.is_empty() {
                     nb_car_coming = match car_coming.rest().first() {
                         E::I(id) => id.clone(),
                         _ => panic!("Not a valid id"),

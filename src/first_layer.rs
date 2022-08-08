@@ -61,8 +61,7 @@ pub fn first_layer(id: i32) {
                 };
 
                 send_message_to_second_layer(
-                    id_car_passing,
-                    tuple![E::I(id_car_passing), E::I(nb_car_passing)],
+                    tuple![E::I(id_car_passing), E::str("nbr_cars_passing"), E::I(nb_car_passing)],
                 );
             }
 
@@ -106,7 +105,7 @@ pub fn first_layer(id: i32) {
 pub fn send_message_to_light(id: i32, tuple: Tuple) {
     let ip_address = String::from("127.0.0.1");
     let mut port_tcp = String::from("900") + &*id.to_string();
-    if id > 10 {
+    if id >= 10 {
         port_tcp = String::from("90") + &*id.to_string();
     }
     let key = "an_example_very_";
@@ -129,12 +128,9 @@ pub fn send_message_to_light(id: i32, tuple: Tuple) {
     client.out(vec![tuple]);
 }
 
-fn send_message_to_second_layer(id: i32, tuple: Tuple) {
+fn send_message_to_second_layer(tuple: Tuple) {
     let ip_address = String::from("127.0.0.1");
-    let mut port_tcp = String::from("900") + &*id.to_string();
-    if id > 10 {
-        port_tcp = String::from("90") + &*id.to_string();
-    }
+    let mut port_tcp = String::from("9016");
     let key = "an_example_very_";
     let mut client = Client::new();
 
